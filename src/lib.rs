@@ -1,4 +1,5 @@
 #![warn(missing_docs)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 /*!
 # An owning reference.
@@ -242,6 +243,10 @@ fn main() {
 }
 ```
 */
+
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate core;
 
 extern crate stable_deref_trait;
 pub use stable_deref_trait::{StableDeref as StableAddress, CloneStableDeref as CloneStableAddress};
@@ -794,7 +799,7 @@ impl<O, T: ?Sized> OwningRefMut<O, T> {
 // OwningHandle
 /////////////////////////////////////////////////////////////////////////////
 
-use std::ops::{Deref, DerefMut};
+use core::ops::{Deref, DerefMut};
 
 /// `OwningHandle` is a complement to `OwningRef`. Where `OwningRef` allows
 /// consumers to pass around an owned object and a dependent reference,
@@ -937,12 +942,12 @@ impl<O, H> OwningHandle<O, H>
 // std traits
 /////////////////////////////////////////////////////////////////////////////
 
-use std::convert::From;
-use std::fmt::{self, Debug};
-use std::marker::{Send, Sync};
-use std::cmp::{Eq, PartialEq, Ord, PartialOrd, Ordering};
-use std::hash::{Hash, Hasher};
-use std::borrow::Borrow;
+use core::convert::From;
+use core::fmt::{self, Debug};
+use core::marker::{Send, Sync};
+use core::cmp::{Eq, PartialEq, Ord, PartialOrd, Ordering};
+use core::hash::{Hash, Hasher};
+use core::borrow::Borrow;
 
 impl<O, T: ?Sized> Deref for OwningRef<O, T> {
     type Target = T;
@@ -1142,11 +1147,14 @@ impl<O, T: ?Sized> Hash for OwningRefMut<O, T> where T: Hash {
 // std types integration and convenience type defs
 /////////////////////////////////////////////////////////////////////////////
 
-use std::boxed::Box;
-use std::rc::Rc;
-use std::sync::Arc;
+use alloc::boxed::Box;
+use alloc::rc::Rc;
+use alloc::sync::Arc;
+#[cfg(feature = "std")]
 use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard};
-use std::cell::{Ref, RefCell, RefMut};
+use core::cell::{Ref, RefCell, RefMut};
+use alloc::vec::Vec;
+use alloc::string::String;
 
 impl<T: 'static> ToHandle for RefCell<T> {
     type Handle = Ref<'static, T>;
@@ -1179,10 +1187,13 @@ pub type RefRef<'a, T, U = T> = OwningRef<Ref<'a, T>, U>;
 /// Typedef of a owning reference that uses a `RefMut` as the owner.
 pub type RefMutRef<'a, T, U = T> = OwningRef<RefMut<'a, T>, U>;
 /// Typedef of a owning reference that uses a `MutexGuard` as the owner.
+#[cfg(feature = "std")]
 pub type MutexGuardRef<'a, T, U = T> = OwningRef<MutexGuard<'a, T>, U>;
 /// Typedef of a owning reference that uses a `RwLockReadGuard` as the owner.
+#[cfg(feature = "std")]
 pub type RwLockReadGuardRef<'a, T, U = T> = OwningRef<RwLockReadGuard<'a, T>, U>;
 /// Typedef of a owning reference that uses a `RwLockWriteGuard` as the owner.
+#[cfg(feature = "std")]
 pub type RwLockWriteGuardRef<'a, T, U = T> = OwningRef<RwLockWriteGuard<'a, T>, U>;
 
 /// Typedef of a mutable owning reference that uses a `Box` as the owner.
@@ -1195,8 +1206,10 @@ pub type StringRefMut = OwningRefMut<String, str>;
 /// Typedef of a mutable owning reference that uses a `RefMut` as the owner.
 pub type RefMutRefMut<'a, T, U = T> = OwningRefMut<RefMut<'a, T>, U>;
 /// Typedef of a mutable owning reference that uses a `MutexGuard` as the owner.
+#[cfg(feature = "std")]
 pub type MutexGuardRefMut<'a, T, U = T> = OwningRefMut<MutexGuard<'a, T>, U>;
 /// Typedef of a mutable owning reference that uses a `RwLockWriteGuard` as the owner.
+#[cfg(feature = "std")]
 pub type RwLockWriteGuardRefMut<'a, T, U = T> = OwningRefMut<RwLockWriteGuard<'a, T>, U>;
 
 unsafe impl<'a, T: 'a> IntoErased<'a> for Box<T> {
